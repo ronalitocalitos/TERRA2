@@ -113,7 +113,7 @@ else:
     sensor_data = get_sensor_latest(device_id)
 
     if sensor_data:
-        st.subheader("📡 ข้อมูลล่าสุดจากเซนเซอร์ (Real-time Cloud Data)")
+        st.subheader("ข้อมูลล่าสุดจากเซนเซอร์ (The most recent data)")
         m1, m2, m3, m4, m5 = st.columns(5)
         m1.metric("Nitrogen (N)", f"{sensor_data['N']}")
         m2.metric("Phosphorus (P)", f"{sensor_data['P']}")
@@ -139,7 +139,7 @@ else:
             yield_target = st.number_input("เป้าหมายผลผลิตที่ต้องการ (กก./ต้น):", min_value=1, value=100)
 
         # --- ส่วนประมวลผล AI และ Expert System ---
-        if st.button("🚀 เริ่มวิเคราะห์แผนการใส่ปุ๋ย", use_container_width=True):
+        if st.button("เริ่มวิเคราะห์แผนการใส่ปุ๋ย", use_container_width=True):
             current_ph = sensor_data['pH']
             stage_map = {"ฟื้นต้น": 1, "สะสมอาหาร": 2, "ขยายผล": 3, "ก่อนเก็บเกี่ยว": 4}
 
@@ -189,5 +189,6 @@ else:
 
     st.divider()
     st.caption("Project Terra | Engineering, Chiang Mai University 2026")
+
 
 

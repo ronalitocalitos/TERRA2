@@ -63,7 +63,7 @@ if not st.session_state.logged_in:
 
     st.markdown("""
         <h1 style='text-align: center; margin-top: 80px;'>
-            เข้าสู่ระบบ TERRA (WEFARM)
+            เข้าสู่ระบบ TERRA
         </h1>
         <p style='text-align: center; font-size:18px;'>
             กรุณากรอกรหัสเครื่องเซนเซอร์ (Serial Number) เพื่อเข้าดูข้อมูลแปลงเกษตรของคุณ

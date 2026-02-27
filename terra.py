@@ -5,19 +5,9 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
 
-# ---------------- PRE-CONFIG LOGIC ----------------
-# ตรวจสอบสถานะการ Login เพื่อกำหนด Title ก่อน Render หน้าเว็บ
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-
-if st.session_state.logged_in:
-    current_title = "TERRA - dashboard"
-else:
-    current_title = "TERRA - home"
-
-# เรียกใช้ set_page_config เพียงครั้งเดียวที่บนสุดของสคริปต์
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(
-    page_title=current_title,
+    page_title="TERRA - AI Fertilizer System",
     page_icon="🌱",
     layout="wide"
 )
@@ -25,6 +15,7 @@ st.set_page_config(
 # ---------------- UI STYLE ----------------
 st.markdown("""
 <style>
+
 /* ===== SIDEBAR FLEX LAYOUT ===== */
 section[data-testid="stSidebar"] > div:first-child {
     display: flex;
@@ -55,10 +46,10 @@ section[data-testid="stSidebar"] button:hover {
 .time-text {
     color: white;
     text-align: right;
-    font-size: 22px;
     font-weight: 600;
     margin-top: 10px;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -74,7 +65,6 @@ def init_firebase():
 # ---------------- LOAD MODEL ----------------
 @st.cache_resource
 def load_model():
-    # ตรวจสอบว่าไฟล์ terra_model.pkl อยู่ในโฟลเดอร์เดียวกัน
     return joblib.load("terra_model.pkl")
 
 db = init_firebase()
@@ -86,14 +76,20 @@ reg = model_data['regressor']
 def format_thai_datetime(timestamp_str):
     try:
         dt = datetime.strptime(timestamp_str, "%d%m%Y_%H%M%S")
-        thai_months = {
-            1: "ม.ค.", 2: "ก.พ.", 3: "มี.ค.", 4: "เม.ย.",
-            5: "พ.ค.", 6: "มิ.ย.", 7: "ก.ค.", 8: "ส.ค.",
-            9: "ก.ย.", 10: "ต.ค.", 11: "พ.ย.", 12: "ธ.ค."
+
+        thai_months_full = {
+            1: "มกราคม", 2: "กุมภาพันธ์", 3: "มีนาคม", 4: "เมษายน",
+            5: "พฤษภาคม", 6: "มิถุนายน", 7: "กรกฎาคม", 8: "สิงหาคม",
+            9: "กันยายน", 10: "ตุลาคม", 11: "พฤศจิกายน", 12: "ธันวาคม"
         }
-        return f"{dt.day} {thai_months[dt.month]} {dt.year}<br>{dt.hour}:{dt.minute:02d}"
+
+        date_part = f"{dt.day} {thai_months_full[dt.month]} {dt.year}"
+        time_part = f"{dt.hour} : {dt.minute:02d}"
+
+        return date_part, time_part
+
     except:
-        return timestamp_str
+        return timestamp_str, ""
 
 # ---------------- GET SENSOR DATA ----------------
 def get_sensor_latest(device_id):
@@ -114,15 +110,17 @@ def get_sensor_latest(device_id):
                 'cond': data.get('conductivity', 0)
             }
     except Exception as e:
-        st.error(f"เกิดข้อผิดพลาดในการดึงข้อมูล: {e}")
+        st.error(f"เกิดข้อผิดพลาด: {e}")
     return None
 
-# ---------------- SESSION CHECK ----------------
+# ---------------- SESSION ----------------
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
 if 'current_device' not in st.session_state:
     st.session_state.current_device = None
 
 # ==================================================
-# PAGE 1: LOGIN (Home)
+# LOGIN PAGE
 # ==================================================
 if not st.session_state.logged_in:
 
@@ -157,17 +155,21 @@ if not st.session_state.logged_in:
                     st.warning("⚠️ กรุณากรอกรหัสเครื่อง")
 
 # ==================================================
-# PAGE 2: DASHBOARD
+# DASHBOARD
 # ==================================================
 else:
+
     device_id = st.session_state.current_device
 
     # -------- SIDEBAR --------
     with st.sidebar:
+
         st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
+
         st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
-        
+
         logout = st.button("ออกจากระบบ", use_container_width=True)
+
         if logout:
             st.session_state.logged_in = False
             st.session_state.current_device = None
@@ -183,29 +185,35 @@ else:
 
     with col_left:
         st.title("TERRA Dashboard")
-        st.markdown("วิเคราะห์ธาตุอาหารในดินและแนะนำการใส่ปุ๋ยด้วย AI")
 
     with col_right:
         if sensor_data:
-            formatted_time = format_thai_datetime(sensor_data['timestamp'])
+            date_part, time_part = format_thai_datetime(sensor_data['timestamp'])
             st.markdown(
-                f"<div class='time-text'>{formatted_time}</div>",
+                f"""
+                <div class='time-text'>
+                    <div style="font-size:20px;">{date_part}</div>
+                    <div style="font-size:16px;">{time_part}</div>
+                </div>
+                """,
                 unsafe_allow_html=True
             )
+
+    st.markdown("วิเคราะห์ธาตุอาหารในดินและแนะนำการใส่ปุ๋ยด้วย AI")
 
     if sensor_data:
         st.subheader("ข้อมูลล่าสุดจากเซนเซอร์")
 
         m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Nitrogen (N)", f"{sensor_data['N']} mg/kg")
-        m2.metric("Phosphorus (P)", f"{sensor_data['P']} mg/kg")
-        m3.metric("Potassium (K)", f"{sensor_data['K']} mg/kg")
+        m1.metric("Nitrogen (N)", sensor_data['N'])
+        m2.metric("Phosphorus (P)", sensor_data['P'])
+        m3.metric("Potassium (K)", sensor_data['K'])
         m4.metric("ค่า pH", sensor_data['pH'])
-        m5.metric("ความชื้น (%)", f"{sensor_data['Moist']}%")
+        m5.metric("ความชื้น (%)", sensor_data['Moist'])
 
         with st.expander("ดูค่าเพิ่มเติม"):
             st.write(f"อุณหภูมิ: {sensor_data['temp']} °C")
-            st.write(f"Conductivity: {sensor_data['cond']} uS/cm")
+            st.write(f"Conductivity: {sensor_data['cond']}")
 
         st.divider()
 
@@ -223,11 +231,12 @@ else:
         )
 
         if st.button("เริ่มวิเคราะห์", use_container_width=True):
+
             stage_map = {
-                "ฟื้นต้น": 1,
-                "สะสมอาหาร": 2,
-                "ขยายผล": 3,
-                "ก่อนเก็บเกี่ยว": 4
+                "ฟื้นต้น":1,
+                "สะสมอาหาร":2,
+                "ขยายผล":3,
+                "ก่อนเก็บเกี่ยว":4
             }
 
             input_df = pd.DataFrame([[ 
@@ -243,7 +252,6 @@ else:
                 'pH','Moisture','Stage','Target_Yield_kg'
             ])
 
-            # ทำนายผลด้วย Model
             action_result = clf.predict(input_df)[0]
             nums_result = reg.predict(input_df)[0]
 
@@ -254,12 +262,12 @@ else:
             st.success(f"💡 ผลวิเคราะห์จาก AI: {action_result}")
 
             colA, colB, colC = st.columns(3)
-            colA.info(f"ปริมาณ N ที่แนะนำ: {n_pred:.1f} กรัม")
-            colB.info(f"ปริมาณ P ที่แนะนำ: {p_pred:.1f} กรัม")
-            colC.info(f"ปริมาณ K ที่แนะนำ: {k_pred:.1f} กรัม")
+            colA.info(f"N: {n_pred:.1f} กรัม")
+            colB.info(f"P: {p_pred:.1f} กรัม")
+            colC.info(f"K: {k_pred:.1f} กรัม")
 
     else:
-        st.error("❌ ไม่พบข้อมูลเซนเซอร์ล่าสุดในระบบ")
+        st.error("❌ ไม่พบข้อมูลเซนเซอร์")
 
     st.divider()
     st.caption("Project Terra | Engineering CMU 2026")

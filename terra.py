@@ -193,7 +193,7 @@ else:
                 f"""
                 <div class='time-text'>
                     <div style="font-size:20px;">{date_part}</div>
-                    <div style="font-size:16px;">{time_part}</div>
+                    <div style="font-size:20px;">{time_part}</div>
                 </div>
                 """,
                 unsafe_allow_html=True

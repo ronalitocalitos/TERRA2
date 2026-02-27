@@ -16,7 +16,7 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* ===== SIDEBAR FLEX LAYOUT ===== */
+/* ===== SIDEBAR FLEX ===== */
 section[data-testid="stSidebar"] > div:first-child {
     display: flex;
     flex-direction: column;
@@ -25,12 +25,11 @@ section[data-testid="stSidebar"] > div:first-child {
 
 /* ===== HISTORY CARD ===== */
 .history-card {
-    padding: 12px;
-    margin-bottom: 10px;
-    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+    border-radius: 14px;
     background-color: #1f2937;
     border: 1px solid #374151;
-    transition: 0.2s ease;
 }
 
 .history-selected {
@@ -48,7 +47,7 @@ section[data-testid="stSidebar"] > div:first-child {
     opacity: 0.8;
 }
 
-/* ===== LOGOUT CONTAINER PUSH TO BOTTOM ===== */
+/* ===== LOGOUT PUSH BOTTOM ===== */
 .logout-container {
     margin-top: auto;
 }
@@ -80,16 +79,16 @@ def format_thai_datetime(timestamp_str):
     try:
         dt = datetime.strptime(timestamp_str, "%d%m%Y_%H%M%S")
 
-        thai_months_full = {
+        thai_months = {
             1: "มกราคม", 2: "กุมภาพันธ์", 3: "มีนาคม", 4: "เมษายน",
             5: "พฤษภาคม", 6: "มิถุนายน", 7: "กรกฎาคม", 8: "สิงหาคม",
             9: "กันยายน", 10: "ตุลาคม", 11: "พฤศจิกายน", 12: "ธันวาคม"
         }
 
-        date_part = f"{dt.day} {thai_months_full[dt.month]} {dt.year}"
-        time_part = f"{dt.hour}:{dt.minute:02d}"
-
-        return date_part, time_part
+        return (
+            f"{dt.day} {thai_months[dt.month]} {dt.year}",
+            f"{dt.hour}:{dt.minute:02d}"
+        )
     except:
         return timestamp_str, ""
 
@@ -118,9 +117,7 @@ def get_sensor_history(device_id, limit=10):
                 'cond': data.get('conductivity', 0)
             })
         return history
-
-    except Exception as e:
-        st.error(f"เกิดข้อผิดพลาด: {e}")
+    except:
         return []
 
 # ---------------- SESSION ----------------
@@ -136,35 +133,22 @@ if 'selected_timestamp' not in st.session_state:
 # ==================================================
 if not st.session_state.logged_in:
 
-    st.markdown("""
-        <h1 style='text-align: center; margin-top: 100px;'>
-            เข้าสู่ระบบ TERRA
-        </h1>
-        <p style='text-align: center; font-size:18px;'>
-            กรุณากรอกรหัสเครื่องเซนเซอร์ (Serial Number)
-        </p>
-    """, unsafe_allow_html=True)
+    st.title("เข้าสู่ระบบ TERRA")
+    device_input = st.text_input("Serial Number", placeholder="TERRA0001")
 
-    col1, col2, col3 = st.columns([1,2,1])
+    if st.button("เข้าสู่ระบบ", use_container_width=True):
+        if device_input:
+            device_id_upper = device_input.strip().upper()
+            doc_ref = db.collection('devices').document(device_id_upper).get()
 
-    with col2:
-        with st.form("login_form"):
-            device_input = st.text_input("Serial Number:", placeholder="เช่น TERRA0001")
-            submit_login = st.form_submit_button("เข้าสู่ระบบ", use_container_width=True)
-
-            if submit_login:
-                if device_input:
-                    device_id_upper = device_input.strip().upper()
-                    doc_ref = db.collection('devices').document(device_id_upper).get()
-
-                    if doc_ref.exists:
-                        st.session_state.logged_in = True
-                        st.session_state.current_device = device_id_upper
-                        st.rerun()
-                    else:
-                        st.error("❌ ไม่พบรหัสเครื่องนี้ในระบบ")
-                else:
-                    st.warning("⚠️ กรุณากรอกรหัสเครื่อง")
+            if doc_ref.exists:
+                st.session_state.logged_in = True
+                st.session_state.current_device = device_id_upper
+                st.rerun()
+            else:
+                st.error("❌ ไม่พบรหัสเครื่องนี้ในระบบ")
+        else:
+            st.warning("⚠️ กรุณากรอกรหัสเครื่อง")
 
 # ==================================================
 # DASHBOARD
@@ -182,31 +166,21 @@ else:
         st.subheader("📜 History (10 ล่าสุด)")
 
         if history_list:
-
-            timestamps = [item['timestamp'] for item in history_list]
-
-            selected_timestamp = st.radio(
-                "เลือกข้อมูล",
-                timestamps,
-                index=0,
-                label_visibility="collapsed"
-            )
-
-            st.session_state.selected_timestamp = selected_timestamp
-
             for item in history_list:
+
                 date_part, time_part = format_thai_datetime(item['timestamp'])
+                is_selected = (
+                    item['timestamp'] == st.session_state.selected_timestamp
+                )
 
-                selected_class = ""
-                if item['timestamp'] == selected_timestamp:
-                    selected_class = "history-selected"
+                selected_class = "history-selected" if is_selected else ""
 
-                st.markdown(f"""
-                    <div class="history-card {selected_class}">
-                        <div class="history-date">{date_part}</div>
-                        <div class="history-time">{time_part}</div>
-                    </div>
-                """, unsafe_allow_html=True)
+                if st.button(
+                    f"{date_part} {time_part}",
+                    key=item['timestamp'],
+                    use_container_width=True
+                ):
+                    st.session_state.selected_timestamp = item['timestamp']
 
         st.divider()
         st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
@@ -223,50 +197,30 @@ else:
     sensor_data = None
 
     if history_list:
-        for item in history_list:
-            if item['timestamp'] == st.session_state.selected_timestamp:
-                sensor_data = item
-                break
+        if st.session_state.selected_timestamp:
+            for item in history_list:
+                if item['timestamp'] == st.session_state.selected_timestamp:
+                    sensor_data = item
+                    break
+        else:
+            sensor_data = history_list[0]
 
     # -------- HEADER --------
-    col_left, col_right = st.columns([3,1])
-
-    with col_left:
-        st.title("TERRA Dashboard")
-
-    with col_right:
-        if sensor_data:
-            date_part, time_part = format_thai_datetime(sensor_data['timestamp'])
-            st.markdown(
-                f"""
-                <div style='text-align:right; font-weight:600;'>
-                    <div>{date_part}</div>
-                    <div>{time_part}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    st.markdown("วิเคราะห์ธาตุอาหารในดินและแนะนำการใส่ปุ๋ยด้วย AI")
+    st.title("TERRA Dashboard")
 
     if sensor_data:
 
-        st.subheader("ข้อมูลจากเซนเซอร์")
+        date_part, time_part = format_thai_datetime(sensor_data['timestamp'])
+        st.caption(f"{date_part} | {time_part}")
 
         m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Nitrogen (N)", sensor_data['N'])
-        m2.metric("Phosphorus (P)", sensor_data['P'])
-        m3.metric("Potassium (K)", sensor_data['K'])
-        m4.metric("ค่า pH", sensor_data['pH'])
-        m5.metric("ความชื้น (%)", sensor_data['Moist'])
-
-        with st.expander("ดูค่าเพิ่มเติม"):
-            st.write(f"อุณหภูมิ: {sensor_data['temp']} °C")
-            st.write(f"Conductivity: {sensor_data['cond']}")
+        m1.metric("N", sensor_data['N'])
+        m2.metric("P", sensor_data['P'])
+        m3.metric("K", sensor_data['K'])
+        m4.metric("pH", sensor_data['pH'])
+        m5.metric("Moisture", sensor_data['Moist'])
 
         st.divider()
-
-        st.subheader("⚙️ ตั้งค่าการวิเคราะห์")
 
         stage_name = st.selectbox(
             "ระยะการเจริญเติบโต:",
@@ -308,15 +262,15 @@ else:
             p_pred = max(0, nums_result[2])
             k_pred = max(0, nums_result[3])
 
-            st.success(f"💡 ผลวิเคราะห์จาก AI: {action_result}")
+            st.success(f"💡 {action_result}")
 
-            colA, colB, colC = st.columns(3)
-            colA.info(f"N: {n_pred:.1f} กรัม")
-            colB.info(f"P: {p_pred:.1f} กรัม")
-            colC.info(f"K: {k_pred:.1f} กรัม")
+            c1, c2, c3 = st.columns(3)
+            c1.info(f"N: {n_pred:.1f} กรัม")
+            c2.info(f"P: {p_pred:.1f} กรัม")
+            c3.info(f"K: {k_pred:.1f} กรัม")
 
     else:
-        st.error("❌ ไม่พบข้อมูลเซนเซอร์")
+        st.error("❌ ไม่พบข้อมูล")
 
     st.divider()
     st.caption("Project Terra | Engineering CMU 2026")

@@ -12,39 +12,31 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------------- CUSTOM UI STYLE ----------------
+# ---------------- FORCE SIDEBAR LOGOUT STYLE ----------------
 st.markdown("""
 <style>
 
-/* ===== SIDEBAR FULL HEIGHT FLEX ===== */
-section[data-testid="stSidebar"] > div {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+/* ===== FORCE ALL SIDEBAR BUTTON STYLE ===== */
+section[data-testid="stSidebar"] button {
+    border: 2px solid #e53935 !important;
+    background-color: rgba(229, 57, 53, 0.08) !important;
+    color: #e53935 !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
 }
 
-/* ===== LOGOUT AT BOTTOM ===== */
-.logout-container {
-    margin-top: auto;
+section[data-testid="stSidebar"] button:hover {
+    background-color: rgba(229, 57, 53, 0.18) !important;
 }
 
-/* ===== LOGOUT BUTTON STYLE ===== */
-.logout-container div.stButton > button {
-    border: 2px solid #e53935;
-    background-color: rgba(229, 57, 53, 0.08);
-    color: #e53935;
+/* ===== WHITE TIME TEXT ===== */
+.time-text {
+    color: white;
+    text-align: right;
+    line-height: 1.4;
+    margin-top: 10px;
+    font-size: 22px;
     font-weight: 600;
-    border-radius: 8px;
-    padding: 10px 0px;
-    transition: all 0.2s ease-in-out;
-}
-
-.logout-container div.stButton > button:hover {
-    background-color: rgba(229, 57, 53, 0.15);
-}
-
-.logout-container div.stButton > button:active {
-    transform: scale(0.98);
 }
 
 </style>
@@ -157,14 +149,15 @@ else:
 
         st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
 
-        st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
+        # Spacer ดันปุ่มลงล่าง
+        st.markdown("<br>" * 20, unsafe_allow_html=True)
 
-        if st.button("🚪 ออกจากระบบ", use_container_width=True):
+        logout = st.button("🚪 ออกจากระบบ", use_container_width=True)
+
+        if logout:
             st.session_state.logged_in = False
             st.session_state.current_device = None
             st.rerun()
-
-        st.markdown("</div>", unsafe_allow_html=True)
 
     # -------- FETCH DATA --------
     sensor_data = get_sensor_latest(device_id)
@@ -179,21 +172,13 @@ else:
         if sensor_data:
             formatted_time = format_thai_datetime(sensor_data['timestamp'])
             st.markdown(
-                f"""
-                <div style='text-align: right; line-height:1.4; margin-top:10px; color:white;'>
-                    <div style='font-size:22px; font-weight:600;'>
-                        {formatted_time}
-                    </div>
-                </div>
-                """,
+                f"<div class='time-text'>{formatted_time}</div>",
                 unsafe_allow_html=True
             )
 
     st.markdown("วิเคราะห์ธาตุอาหารในดินและแนะนำการใส่ปุ๋ยด้วย AI")
 
-    # -------- SENSOR DISPLAY --------
     if sensor_data:
-
         st.subheader("ข้อมูลล่าสุดจากเซนเซอร์")
 
         m1, m2, m3, m4, m5 = st.columns(5)
@@ -209,7 +194,6 @@ else:
 
         st.divider()
 
-        # -------- AI SECTION --------
         st.subheader("⚙️ ตั้งค่าการวิเคราะห์")
 
         stage_name = st.selectbox(

@@ -23,30 +23,34 @@ section[data-testid="stSidebar"] > div:first-child {
     height: 100vh;
 }
 
+/* ===== HISTORY CARD ===== */
+.history-card {
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    transition: 0.2s ease;
+}
+
+.history-selected {
+    background-color: #14532d !important;
+    border: 1px solid #22c55e !important;
+}
+
+.history-date {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.history-time {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
 /* ===== LOGOUT CONTAINER PUSH TO BOTTOM ===== */
 .logout-container {
     margin-top: auto;
-}
-
-/* ===== RED LOGOUT BUTTON ===== */
-section[data-testid="stSidebar"] button {
-    border: 2px solid #e53935 !important;
-    background-color: rgba(229, 57, 53, 0.08) !important;
-    color: #e53935 !important;
-    font-weight: 600 !important;
-    border-radius: 8px !important;
-}
-
-section[data-testid="stSidebar"] button:hover {
-    background-color: rgba(229, 57, 53, 0.18) !important;
-}
-
-/* ===== WHITE TIME TEXT ===== */
-.time-text {
-    color: white;
-    text-align: right;
-    font-weight: 600;
-    margin-top: 10px;
 }
 
 </style>
@@ -86,7 +90,6 @@ def format_thai_datetime(timestamp_str):
         time_part = f"{dt.hour}:{dt.minute:02d}"
 
         return date_part, time_part
-
     except:
         return timestamp_str, ""
 
@@ -114,7 +117,6 @@ def get_sensor_history(device_id, limit=10):
                 'temp': data.get('temperature', 0),
                 'cond': data.get('conductivity', 0)
             })
-
         return history
 
     except Exception as e:
@@ -179,12 +181,32 @@ else:
         st.divider()
         st.subheader("📜 History (10 ล่าสุด)")
 
-        for item in history_list:
-            date_part, time_part = format_thai_datetime(item['timestamp'])
-            label = f"{date_part} {time_part}"
+        if history_list:
 
-            if st.button(label, key=item['timestamp']):
-                st.session_state.selected_timestamp = item['timestamp']
+            timestamps = [item['timestamp'] for item in history_list]
+
+            selected_timestamp = st.radio(
+                "เลือกข้อมูล",
+                timestamps,
+                index=0,
+                label_visibility="collapsed"
+            )
+
+            st.session_state.selected_timestamp = selected_timestamp
+
+            for item in history_list:
+                date_part, time_part = format_thai_datetime(item['timestamp'])
+
+                selected_class = ""
+                if item['timestamp'] == selected_timestamp:
+                    selected_class = "history-selected"
+
+                st.markdown(f"""
+                    <div class="history-card {selected_class}">
+                        <div class="history-date">{date_part}</div>
+                        <div class="history-time">{time_part}</div>
+                    </div>
+                """, unsafe_allow_html=True)
 
         st.divider()
         st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
@@ -201,13 +223,10 @@ else:
     sensor_data = None
 
     if history_list:
-        if st.session_state.selected_timestamp:
-            for item in history_list:
-                if item['timestamp'] == st.session_state.selected_timestamp:
-                    sensor_data = item
-                    break
-        else:
-            sensor_data = history_list[0]  # default latest
+        for item in history_list:
+            if item['timestamp'] == st.session_state.selected_timestamp:
+                sensor_data = item
+                break
 
     # -------- HEADER --------
     col_left, col_right = st.columns([3,1])
@@ -220,9 +239,9 @@ else:
             date_part, time_part = format_thai_datetime(sensor_data['timestamp'])
             st.markdown(
                 f"""
-                <div class='time-text'>
-                    <div style="font-size:18px;">{date_part}</div>
-                    <div style="font-size:18px;">{time_part}</div>
+                <div style='text-align:right; font-weight:600;'>
+                    <div>{date_part}</div>
+                    <div>{time_part}</div>
                 </div>
                 """,
                 unsafe_allow_html=True

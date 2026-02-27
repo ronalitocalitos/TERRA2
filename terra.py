@@ -4,14 +4,15 @@ import joblib
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# --- 1. การตั้งค่าหน้าเว็บ ---
+# --- 1. Page Config ---
 st.set_page_config(
     page_title="TERRA - AI Fertilizer System",
     page_icon="🌱",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# --- 2. เชื่อมต่อ Firebase ---
+# --- 2. Firebase Connection ---
 @st.cache_resource
 def init_firebase():
     if not firebase_admin._apps:
@@ -20,7 +21,7 @@ def init_firebase():
         firebase_admin.initialize_app(cred)
     return firestore.client()
 
-# --- 3. โหลดโมเดล AI ---
+# --- 3. Load AI Model ---
 @st.cache_resource
 def load_terra_model():
     return joblib.load("terra_model.pkl")
@@ -30,14 +31,18 @@ model_data = load_terra_model()
 clf = model_data['classifier']
 reg = model_data['regressor']
 
-# --- 4. ดึงข้อมูลเซนเซอร์ล่าสุด ---
+# --- 4. Get Latest Sensor Data (with timestamp) ---
 def get_sensor_latest(device_id):
     try:
         query = db.collection('devices').document(device_id).collection('soilData')
         docs = query.order_by("__name__", direction=firestore.Query.DESCENDING).limit(1).get()
+
         for doc in docs:
             data = doc.to_dict()
+            timestamp = doc.id  # 👈 document name = timestamp
+
             return {
+                'timestamp': timestamp,
                 'N': data.get('N', 0),
                 'P': data.get('P', 0),
                 'K': data.get('K', 0),
@@ -50,28 +55,25 @@ def get_sensor_latest(device_id):
         st.error(f"เกิดข้อผิดพลาดในการดึงข้อมูล: {e}")
     return None
 
-# --- 5. Session ---
+# --- 5. Session State ---
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'current_device' not in st.session_state:
     st.session_state.current_device = None
 
 # ==================================================
-# 🚪 LOGIN PAGE (Centered)
+# 🚪 LOGIN PAGE
 # ==================================================
 if not st.session_state.logged_in:
 
     st.markdown("""
         <h1 style='text-align: center; margin-top: 80px;'>
-            เข้าสู่ระบบ TERRA
+            เข้าสู่ระบบ TERRA (WEFARM)
         </h1>
         <p style='text-align: center; font-size:18px;'>
-            กรุณากรอกรหัสเครื่องเซนเซอร์ (Serial Number) เพื่อเข้าดูข้อมูลแปลงเกษตรของคุณ
+            กรุณากรอกรหัสเครื่องเซนเซอร์ (Serial Number)
         </p>
     """, unsafe_allow_html=True)
-
-    st.write("")
-    st.write("")
 
     col1, col2, col3 = st.columns([1,2,1])
 
@@ -90,7 +92,7 @@ if not st.session_state.logged_in:
                         st.session_state.current_device = device_id_upper
                         st.rerun()
                     else:
-                        st.error("❌ ไม่พบรหัสเครื่องนี้ในระบบ กรุณาตรวจสอบความถูกต้อง")
+                        st.error("❌ ไม่พบรหัสเครื่องนี้ในระบบ")
                 else:
                     st.warning("⚠️ กรุณากรอกรหัสเครื่อง")
 
@@ -109,11 +111,26 @@ else:
             st.session_state.current_device = None
             st.rerun()
 
-    st.title("TERRA")
-    st.markdown("วิเคราะห์ธาตุอาหารในดินและแนะนำการใส่ปุ๋ยด้วย AI โดยกลุ่ม WEFARM")
-
     sensor_data = get_sensor_latest(device_id)
 
+    # --- Header with Timestamp ---
+    col_left, col_right = st.columns([3,1])
+
+    with col_left:
+        st.title("TERRA Dashboard")
+
+    with col_right:
+        if sensor_data:
+            st.markdown(
+                f"<div style='text-align: right; font-size:14px;'>"
+                f"🕒 Last Update:<br><b>{sensor_data['timestamp']}</b>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+
+    st.markdown("วิเคราะห์ธาตุอาหารในดินและแนะนำการใส่ปุ๋ยด้วย AI")
+
+    # --- Show Sensor Data ---
     if sensor_data:
         st.subheader("ข้อมูลล่าสุดจากเซนเซอร์")
 
@@ -130,6 +147,7 @@ else:
 
         st.divider()
 
+        # --- User Input ---
         stage_name = st.selectbox(
             "ระยะการเจริญเติบโต:",
             ["ฟื้นต้น", "สะสมอาหาร", "ขยายผล", "ก่อนเก็บเกี่ยว"]
@@ -168,7 +186,7 @@ else:
             colC.info(f"K: {k_pred:.1f} กรัม")
 
     else:
-        st.error("❌ ไม่พบข้อมูลเซนเซอร์")
+        st.error(f"❌ ไม่พบข้อมูลเซนเซอร์ของเครื่อง {device_id}")
 
     st.divider()
     st.caption("Project Terra | Engineering CMU 2026")

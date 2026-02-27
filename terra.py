@@ -16,30 +16,41 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* Logout Button Style */
-section[data-testid="stSidebar"] div.stButton > button {
+/* ===== SIDEBAR FULL HEIGHT FLEX ===== */
+section[data-testid="stSidebar"] > div {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* ===== LOGOUT AT BOTTOM ===== */
+.logout-container {
+    margin-top: auto;
+}
+
+/* ===== LOGOUT BUTTON STYLE ===== */
+.logout-container div.stButton > button {
     border: 2px solid #e53935;
-    background-color: #e53935;
-    color: white;
+    background-color: rgba(229, 57, 53, 0.08);
+    color: #e53935;
     font-weight: 600;
     border-radius: 8px;
-    padding: 8px 0px;
+    padding: 10px 0px;
     transition: all 0.2s ease-in-out;
 }
 
-section[data-testid="stSidebar"] div.stButton > button:hover {
-    background-color: #c62828;
-    border: 2px solid #c62828;
+.logout-container div.stButton > button:hover {
+    background-color: rgba(229, 57, 53, 0.15);
 }
 
-section[data-testid="stSidebar"] div.stButton > button:active {
+.logout-container div.stButton > button:active {
     transform: scale(0.98);
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------- FIREBASE ----------------
+# ---------------- FIREBASE INIT ----------------
 @st.cache_resource
 def init_firebase():
     if not firebase_admin._apps:
@@ -50,11 +61,11 @@ def init_firebase():
 
 # ---------------- LOAD MODEL ----------------
 @st.cache_resource
-def load_terra_model():
+def load_model():
     return joblib.load("terra_model.pkl")
 
 db = init_firebase()
-model_data = load_terra_model()
+model_data = load_model()
 clf = model_data['classifier']
 reg = model_data['regressor']
 
@@ -62,13 +73,11 @@ reg = model_data['regressor']
 def format_thai_datetime(timestamp_str):
     try:
         dt = datetime.strptime(timestamp_str, "%d%m%Y_%H%M%S")
-
         thai_months = {
             1: "ม.ค.", 2: "ก.พ.", 3: "มี.ค.", 4: "เม.ย.",
             5: "พ.ค.", 6: "มิ.ย.", 7: "ก.ค.", 8: "ส.ค.",
             9: "ก.ย.", 10: "ต.ค.", 11: "พ.ย.", 12: "ธ.ค."
         }
-
         return f"{dt.day} {thai_months[dt.month]} {dt.year}<br>{dt.hour}:{dt.minute:02d}"
     except:
         return timestamp_str
@@ -107,7 +116,7 @@ if 'current_device' not in st.session_state:
 if not st.session_state.logged_in:
 
     st.markdown("""
-        <h1 style='text-align: center; margin-top: 80px;'>
+        <h1 style='text-align: center; margin-top: 100px;'>
             เข้าสู่ระบบ TERRA
         </h1>
         <p style='text-align: center; font-size:18px;'>
@@ -140,20 +149,27 @@ if not st.session_state.logged_in:
 # DASHBOARD
 # ==================================================
 else:
+
     device_id = st.session_state.current_device
 
     # -------- SIDEBAR --------
     with st.sidebar:
+
         st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
+
+        st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
 
         if st.button("🚪 ออกจากระบบ", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.current_device = None
             st.rerun()
 
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # -------- FETCH DATA --------
     sensor_data = get_sensor_latest(device_id)
 
-    # -------- HEADER + TIME --------
+    # -------- HEADER --------
     col_left, col_right = st.columns([3,1])
 
     with col_left:
@@ -164,7 +180,7 @@ else:
             formatted_time = format_thai_datetime(sensor_data['timestamp'])
             st.markdown(
                 f"""
-                <div style='text-align: right; line-height:1.4; margin-top:10px;'>
+                <div style='text-align: right; line-height:1.4; margin-top:10px; color:white;'>
                     <div style='font-size:22px; font-weight:600;'>
                         {formatted_time}
                     </div>
@@ -177,6 +193,7 @@ else:
 
     # -------- SENSOR DISPLAY --------
     if sensor_data:
+
         st.subheader("ข้อมูลล่าสุดจากเซนเซอร์")
 
         m1, m2, m3, m4, m5 = st.columns(5)
@@ -208,7 +225,12 @@ else:
 
         if st.button("เริ่มวิเคราะห์", use_container_width=True):
 
-            stage_map = {"ฟื้นต้น":1, "สะสมอาหาร":2, "ขยายผล":3, "ก่อนเก็บเกี่ยว":4}
+            stage_map = {
+                "ฟื้นต้น":1,
+                "สะสมอาหาร":2,
+                "ขยายผล":3,
+                "ก่อนเก็บเกี่ยว":4
+            }
 
             input_df = pd.DataFrame([[ 
                 sensor_data['N'],
@@ -219,7 +241,8 @@ else:
                 stage_map[stage_name],
                 yield_target
             ]], columns=[
-                'N_soil','P_soil','K_soil','pH','Moisture','Stage','Target_Yield_kg'
+                'N_soil','P_soil','K_soil',
+                'pH','Moisture','Stage','Target_Yield_kg'
             ])
 
             action_result = clf.predict(input_df)[0]

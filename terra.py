@@ -142,7 +142,7 @@ else:
             st.markdown(
                 f"""
                 <div style='text-align: right; line-height:1.4; margin-top:10px;'>
-                    <div style='font-size:22px; font-weight:600; color:#444;'>
+                    <div style='font-size:22px; font-weight:600;'>
                         {formatted_time}
                     </div>
                 </div>

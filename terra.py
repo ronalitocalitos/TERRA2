@@ -12,11 +12,24 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------------- FORCE SIDEBAR LOGOUT STYLE ----------------
+# ---------------- UI STYLE ----------------
 st.markdown("""
 <style>
 
-/* ===== FORCE ALL SIDEBAR BUTTON STYLE ===== */
+/* ===== SIDEBAR FLEX LAYOUT ===== */
+section[data-testid="stSidebar"] > div:first-child {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* ===== LOGOUT CONTAINER ===== */
+.logout-container {
+    margin-top: auto;
+    padding-bottom: 1rem;
+}
+
+/* ===== RED LOGOUT BUTTON ===== */
 section[data-testid="stSidebar"] button {
     border: 2px solid #e53935 !important;
     background-color: rgba(229, 57, 53, 0.08) !important;
@@ -33,10 +46,9 @@ section[data-testid="stSidebar"] button:hover {
 .time-text {
     color: white;
     text-align: right;
-    line-height: 1.4;
-    margin-top: 10px;
     font-size: 22px;
     font-weight: 600;
+    margin-top: 10px;
 }
 
 </style>
@@ -149,8 +161,7 @@ else:
 
         st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
 
-        # Spacer ดันปุ่มลงล่าง
-        st.markdown("<br>" * 20, unsafe_allow_html=True)
+        st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
 
         logout = st.button("🚪 ออกจากระบบ", use_container_width=True)
 
@@ -158,6 +169,8 @@ else:
             st.session_state.logged_in = False
             st.session_state.current_device = None
             st.rerun()
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # -------- FETCH DATA --------
     sensor_data = get_sensor_latest(device_id)

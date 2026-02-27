@@ -20,8 +20,12 @@ st.markdown("""
 section[data-testid="stSidebar"] > div:first-child {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;  /* สำคัญ */
     height: 100vh;
+}
+
+/* ===== LOGOUT CONTAINER PUSH TO BOTTOM ===== */
+.logout-container {
+    margin-top: auto;
 }
 
 /* ===== RED LOGOUT BUTTON ===== */
@@ -159,16 +163,20 @@ else:
     # -------- SIDEBAR --------
     with st.sidebar:
 
-        # Top section
+        # TOP (Status)
         st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
 
-        # Bottom section (logout automatically pushed down)
+        # BOTTOM (Logout)
+        st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
+
         logout = st.button("ออกจากระบบ", use_container_width=True)
 
         if logout:
             st.session_state.logged_in = False
             st.session_state.current_device = None
             st.rerun()
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # -------- FETCH DATA --------
     sensor_data = get_sensor_latest(device_id)

@@ -71,7 +71,7 @@ div.logout-container button {
 }
 
 div.logout-container button:hover {
-    background-color: rgba(229, 57, 53, 0.18) !important;
+    background-color: rgba(229, 0, 0, 0.18) !important;
 }
 
 /* ===== WHITE TIME TEXT ===== */

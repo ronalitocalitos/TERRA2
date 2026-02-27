@@ -115,20 +115,33 @@ model_data = load_model()
 clf = model_data['classifier']
 reg = model_data['regressor']
 
-# ---------------- FORMAT TIME ----------------
+# ---------------- FORMAT TIME (FIXED) ----------------
 def format_thai_datetime(timestamp_str):
-    try:
-        dt = datetime.strptime(timestamp_str, "%d%m%Y_%H%M%S")
-        thai_months_full = {
-            1: "มกราคม", 2: "กุมภาพันธ์", 3: "มีนาคม", 4: "เมษายน",
-            5: "พฤษภาคม", 6: "มิถุนายน", 7: "กรกฎาคม", 8: "สิงหาคม",
-            9: "กันยายน", 10: "ตุลาคม", 11: "พฤศจิกายน", 12: "ธันวาคม"
-        }
-        date_part = f"{dt.day} {thai_months_full[dt.month]} {dt.year}"
-        time_part = f"{dt.hour}:{dt.minute:02d}"
-        return date_part, time_part
-    except:
-        return timestamp_str, ""
+
+    thai_months_full = {
+        1: "มกราคม", 2: "กุมภาพันธ์", 3: "มีนาคม", 4: "เมษายน",
+        5: "พฤษภาคม", 6: "มิถุนายน", 7: "กรกฎาคม", 8: "สิงหาคม",
+        9: "กันยายน", 10: "ตุลาคม", 11: "พฤศจิกายน", 12: "ธันวาคม"
+    }
+
+    timestamp_str = timestamp_str.strip()
+
+    formats = [
+        "%d%m%Y_%H%M%S",  # 29022026_051000
+        "%Y%m%d_%H%M%S",  # 20260229_051000
+    ]
+
+    for fmt in formats:
+        try:
+            dt = datetime.strptime(timestamp_str, fmt)
+            date_part = f"{dt.day} {thai_months_full[dt.month]} {dt.year}"
+            time_part = f"{dt.hour}:{dt.minute:02d}"
+            return date_part, time_part
+        except:
+            continue
+
+    # fallback ถ้า format ไม่ตรงจริง ๆ
+    return timestamp_str, ""
 
 # ---------------- GET HISTORY ----------------
 def get_sensor_history(device_id, limit=10):
@@ -206,7 +219,6 @@ else:
 
     with st.sidebar:
 
-        # 🔥 TERRA TOP
         st.markdown("<div class='sidebar-title'>TERRA</div>", unsafe_allow_html=True)
         st.divider()
 
@@ -242,7 +254,6 @@ else:
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- Main content เหมือนเดิมทุกอย่าง ---
     sensor_data = None
     if history_list:
         if st.session_state.selected_timestamp:

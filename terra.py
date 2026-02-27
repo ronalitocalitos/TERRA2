@@ -23,12 +23,21 @@ section[data-testid="stSidebar"] > div:first-child {
     height: 100vh;
 }
 
+/* ===== TERRA LOGO TEXT ===== */
+.sidebar-title {
+    font-size: 28px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+}
+
 /* ===== PUSH LOGOUT TO BOTTOM ===== */
 .logout-container {
     margin-top: auto;
 }
 
-/* ===== HISTORY BUTTON (CARD STYLE) ===== */
+/* ===== HISTORY BUTTON STYLE ===== */
 section[data-testid="stSidebar"] button {
     border: 1px solid rgba(255,255,255,0.08) !important;
     background: linear-gradient(145deg, #1e1e1e, #161616) !important;
@@ -39,7 +48,6 @@ section[data-testid="stSidebar"] button {
     transition: all 0.2s ease !important;
 }
 
-/* Hover */
 section[data-testid="stSidebar"] button:hover {
     transform: translateY(-2px);
     background: linear-gradient(145deg, #252525, #1c1c1c) !important;
@@ -54,12 +62,12 @@ section[data-testid="stSidebar"] button:hover {
     font-weight: 600 !important;
 }
 
-/* ===== LOGOUT BUTTON (RED) ===== */
+/* ===== LOGOUT BUTTON RED ONLY ===== */
 div.logout-container button {
     border: 2px solid #e53935 !important;
     background-color: rgba(229, 57, 53, 0.08) !important;
     color: #e53935 !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
 }
 
 div.logout-container button:hover {
@@ -74,13 +82,12 @@ div.logout-container button:hover {
     margin-top: 10px;
 }
 
-/* ===== MAKE METRIC LABEL BIGGER ===== */
+/* ===== METRIC BIGGER ===== */
 div[data-testid="metric-container"] label {
     font-size: 22px !important;
     font-weight: 700 !important;
 }
 
-/* ===== MAKE METRIC VALUE BIGGER ===== */
 div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
     font-size: 30px !important;
     font-weight: 700 !important;
@@ -112,16 +119,13 @@ reg = model_data['regressor']
 def format_thai_datetime(timestamp_str):
     try:
         dt = datetime.strptime(timestamp_str, "%d%m%Y_%H%M%S")
-
         thai_months_full = {
             1: "มกราคม", 2: "กุมภาพันธ์", 3: "มีนาคม", 4: "เมษายน",
             5: "พฤษภาคม", 6: "มิถุนายน", 7: "กรกฎาคม", 8: "สิงหาคม",
             9: "กันยายน", 10: "ตุลาคม", 11: "พฤศจิกายน", 12: "ธันวาคม"
         }
-
         date_part = f"{dt.day} {thai_months_full[dt.month]} {dt.year}"
         time_part = f"{dt.hour}:{dt.minute:02d}"
-
         return date_part, time_part
     except:
         return timestamp_str, ""
@@ -202,6 +206,10 @@ else:
 
     with st.sidebar:
 
+        # 🔥 TERRA TOP
+        st.markdown("<div class='sidebar-title'>TERRA</div>", unsafe_allow_html=True)
+        st.divider()
+
         st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
         st.divider()
         st.subheader("📜 History (10 ล่าสุด)")
@@ -209,10 +217,8 @@ else:
         if history_list:
             for item in history_list:
                 date_part, time_part = format_thai_datetime(item['timestamp'])
-
                 is_active = item['timestamp'] == st.session_state.selected_timestamp
                 container_class = "active-history" if is_active else ""
-
                 st.markdown(f"<div class='{container_class}'>", unsafe_allow_html=True)
 
                 if st.button(
@@ -236,8 +242,8 @@ else:
 
         st.markdown("</div>", unsafe_allow_html=True)
 
+    # --- Main content เหมือนเดิมทุกอย่าง ---
     sensor_data = None
-
     if history_list:
         if st.session_state.selected_timestamp:
             for item in history_list:
@@ -248,7 +254,6 @@ else:
             sensor_data = history_list[0]
 
     col_left, col_right = st.columns([3,1])
-
     with col_left:
         st.title("TERRA Dashboard")
 

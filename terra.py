@@ -12,46 +12,48 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------------- UI STYLE ----------------
+# ---------------- CUSTOM CSS ----------------
 st.markdown("""
 <style>
 
-/* ===== SIDEBAR FLEX FULL HEIGHT ===== */
+/* ===== SIDEBAR FULL HEIGHT FLEX ===== */
 section[data-testid="stSidebar"] > div:first-child {
     display: flex;
     flex-direction: column;
     height: 100vh;
 }
 
-/* ===== LOGOUT WRAPPER (push to bottom) ===== */
-.logout-wrapper {
+/* ===== LOGOUT WRAPPER PUSH TO BOTTOM ===== */
+#logout-area {
     margin-top: auto;
     padding-top: 20px;
-    padding-bottom: 10px;
+    padding-bottom: 15px;
 }
 
 /* ===== TARGET ONLY LOGOUT BUTTON ===== */
-div[data-testid="stSidebar"] button[kind="secondary"] {
+#logout-area button {
+    width: 100%;
     border: 2px solid #e53935 !important;
     background-color: rgba(229, 57, 53, 0.08) !important;
     color: #e53935 !important;
     font-weight: 600 !important;
     border-radius: 8px !important;
+    transition: 0.3s ease !important;
 }
 
-/* Hover */
-div[data-testid="stSidebar"] button[kind="secondary"]:hover {
-    background-color: rgba(229, 57, 53, 0.20) !important;
-    color: #ffffff !important;
+/* Hover effect */
+#logout-area button:hover {
+    background-color: #e53935 !important;
+    color: white !important;
 }
 
-/* ===== TIME TEXT ===== */
+/* ===== TIME STYLE ===== */
 .time-text {
     color: white !important;
     text-align: right;
     font-size: 22px;
     font-weight: 600;
-    margin-top: 15px;
+    margin-top: 10px;
 }
 
 </style>
@@ -80,11 +82,6 @@ reg = model_data['regressor']
 def format_thai_datetime(timestamp_str):
     try:
         dt = datetime.strptime(timestamp_str, "%d%m%Y_%H%M%S")
-        thai_months = {
-            1: "ม.ค.", 2: "ก.พ.", 3: "มี.ค.", 4: "เม.ย.",
-            5: "พ.ค.", 6: "มิ.ย.", 7: "ก.ค.", 8: "ส.ค.",
-            9: "ก.ย.", 10: "ต.ค.", 11: "พ.ย.", 12: "ธ.ค."
-        }
         return f"{dt.hour}:{dt.minute:02d}"
     except:
         return timestamp_str
@@ -127,7 +124,7 @@ if not st.session_state.logged_in:
             เข้าสู่ระบบ TERRA
         </h1>
         <p style='text-align: center; font-size:18px;'>
-            กรุณากรอกรหัสเครื่องเซนเซอร์ (Serial Number)
+            กรุณากรอกรหัสเครื่องเซนเซอร์
         </p>
     """, unsafe_allow_html=True)
 
@@ -164,9 +161,9 @@ else:
 
         st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
 
-        st.markdown("<div class='logout-wrapper'>", unsafe_allow_html=True)
+        st.markdown("<div id='logout-area'>", unsafe_allow_html=True)
 
-        logout = st.button("🚪 ออกจากระบบ", use_container_width=True, type="secondary")
+        logout = st.button("🚪 ออกจากระบบ")
 
         if logout:
             st.session_state.logged_in = False

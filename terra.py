@@ -163,7 +163,7 @@ else:
 
         st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
 
-        logout = st.button("🚪 ออกจากระบบ", use_container_width=True)
+        logout = st.button("ออกจากระบบ", use_container_width=True)
 
         if logout:
             st.session_state.logged_in = False

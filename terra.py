@@ -212,7 +212,7 @@ else:
 
         st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
         st.divider()
-        st.subheader("📜 History (10 ล่าสุด)")
+        st.subheader("History")
 
         if history_list:
             for item in history_list:
@@ -255,7 +255,7 @@ else:
 
     col_left, col_right = st.columns([3,1])
     with col_left:
-        st.title("TERRA Dashboard")
+        st.title("Dashboard")
 
     with col_right:
         if sensor_data:

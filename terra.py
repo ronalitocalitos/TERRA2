@@ -69,7 +69,7 @@ if 'current_device' not in st.session_state:
 # 🚪 6. หน้า Login
 # ==========================================
 if not st.session_state.logged_in:
-    st.title("🔐 เข้าสู่ระบบ TERRA (WEFARM)")
+    st.title("เข้าสู่ระบบ TERRA (WEFARM)")
     st.markdown("กรุณากรอกรหัสเครื่องเซนเซอร์ (Serial Number) เพื่อเข้าดูข้อมูลแปลงเกษตรของคุณ")
     
     with st.form("login_form"):
@@ -189,3 +189,4 @@ else:
 
     st.divider()
     st.caption("Project Terra | Engineering, Chiang Mai University 2026")
+

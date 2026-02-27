@@ -74,6 +74,18 @@ div.logout-container button:hover {
     margin-top: 10px;
 }
 
+/* ===== MAKE METRIC LABEL BIGGER ===== */
+div[data-testid="metric-container"] label {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+}
+
+/* ===== MAKE METRIC VALUE BIGGER ===== */
+div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
+    font-size: 30px !important;
+    font-weight: 700 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -188,7 +200,6 @@ else:
     device_id = st.session_state.current_device
     history_list = get_sensor_history(device_id)
 
-    # -------- SIDEBAR --------
     with st.sidebar:
 
         st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
@@ -200,7 +211,6 @@ else:
                 date_part, time_part = format_thai_datetime(item['timestamp'])
 
                 is_active = item['timestamp'] == st.session_state.selected_timestamp
-
                 container_class = "active-history" if is_active else ""
 
                 st.markdown(f"<div class='{container_class}'>", unsafe_allow_html=True)
@@ -216,7 +226,6 @@ else:
                 st.markdown("</div>", unsafe_allow_html=True)
 
         st.divider()
-
         st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
 
         if st.button("ออกจากระบบ", use_container_width=True):
@@ -227,7 +236,6 @@ else:
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # -------- SELECT DATA --------
     sensor_data = None
 
     if history_list:
@@ -239,7 +247,6 @@ else:
         else:
             sensor_data = history_list[0]
 
-    # -------- HEADER --------
     col_left, col_right = st.columns([3,1])
 
     with col_left:

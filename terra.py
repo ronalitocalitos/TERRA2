@@ -186,7 +186,14 @@ if 'selected_timestamp' not in st.session_state:
 # ==================================================
 if not st.session_state.logged_in:
 
-    st.markdown("<h1 style='text-align:center;margin-top:100px;'>เข้าสู่ระบบ TERRA</h1>", unsafe_allow_html=True)
+    st.markdown("""
+        <h1 style='text-align: center; margin-top: 100px;'>
+            เข้าสู่ระบบ TERRA
+        </h1>
+        <p style='text-align: center; font-size:18px;'>
+            กรุณากรอกรหัสเครื่องเซนเซอร์ (Serial Number)
+        </p>
+    """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns([1,2,1])
 

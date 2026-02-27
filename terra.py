@@ -16,21 +16,22 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* ===== SIDEBAR FLEX LAYOUT ===== */
+/* ===== SIDEBAR FLEX FULL HEIGHT ===== */
 section[data-testid="stSidebar"] > div:first-child {
     display: flex;
     flex-direction: column;
     height: 100vh;
 }
 
-/* ===== LOGOUT CONTAINER ===== */
-.logout-container {
+/* ===== LOGOUT WRAPPER (push to bottom) ===== */
+.logout-wrapper {
     margin-top: auto;
-    padding-bottom: 1rem;
+    padding-top: 20px;
+    padding-bottom: 10px;
 }
 
-/* ===== RED LOGOUT BUTTON ===== */
-section[data-testid="stSidebar"] button {
+/* ===== TARGET ONLY LOGOUT BUTTON ===== */
+div[data-testid="stSidebar"] button[kind="secondary"] {
     border: 2px solid #e53935 !important;
     background-color: rgba(229, 57, 53, 0.08) !important;
     color: #e53935 !important;
@@ -38,17 +39,19 @@ section[data-testid="stSidebar"] button {
     border-radius: 8px !important;
 }
 
-section[data-testid="stSidebar"] button:hover {
-    background-color: rgba(229, 57, 53, 0.18) !important;
+/* Hover */
+div[data-testid="stSidebar"] button[kind="secondary"]:hover {
+    background-color: rgba(229, 57, 53, 0.20) !important;
+    color: #ffffff !important;
 }
 
-/* ===== WHITE TIME TEXT ===== */
+/* ===== TIME TEXT ===== */
 .time-text {
-    color: white;
+    color: white !important;
     text-align: right;
     font-size: 22px;
     font-weight: 600;
-    margin-top: 10px;
+    margin-top: 15px;
 }
 
 </style>
@@ -82,7 +85,7 @@ def format_thai_datetime(timestamp_str):
             5: "พ.ค.", 6: "มิ.ย.", 7: "ก.ค.", 8: "ส.ค.",
             9: "ก.ย.", 10: "ต.ค.", 11: "พ.ย.", 12: "ธ.ค."
         }
-        return f"{dt.day} {thai_months[dt.month]} {dt.year}<br>{dt.hour}:{dt.minute:02d}"
+        return f"{dt.hour}:{dt.minute:02d}"
     except:
         return timestamp_str
 
@@ -161,9 +164,9 @@ else:
 
         st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
 
-        st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
+        st.markdown("<div class='logout-wrapper'>", unsafe_allow_html=True)
 
-        logout = st.button("🚪 ออกจากระบบ", use_container_width=True)
+        logout = st.button("🚪 ออกจากระบบ", use_container_width=True, type="secondary")
 
         if logout:
             st.session_state.logged_in = False

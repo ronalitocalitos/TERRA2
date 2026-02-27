@@ -62,17 +62,17 @@ section[data-testid="stSidebar"] button:hover {
     font-weight: 600 !important;
 }
 
-/* ===== LOGOUT BUTTON FORCE RED ===== */
-div.logout-container button[kind="secondary"] {
+/* ===== FORCE LOGOUT BUTTON RED ===== */
+div.logout-container button[data-testid="baseButton-secondary"] {
     border: 2px solid #e53935 !important;
-    background-color: rgba(229, 57, 53, 0.15) !important;
-    color: #e53935 !important;
+    background-color: #e53935 !important;
+    color: white !important;
     font-weight: 700 !important;
 }
 
-div.logout-container button[kind="secondary"]:hover {
-    background-color: #e53935 !important;
-    color: white !important;
+div.logout-container button[data-testid="baseButton-secondary"]:hover {
+    background-color: #c62828 !important;
+    border: 2px solid #c62828 !important;
 }
 
 /* ===== WHITE TIME TEXT ===== */

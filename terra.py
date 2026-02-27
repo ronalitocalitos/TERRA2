@@ -7,7 +7,7 @@ from datetime import datetime
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
-    page_title="TERRA - AI Fertilizer System",
+    page_title="TERRA - ",
     page_icon="🌱",
     layout="wide"
 )

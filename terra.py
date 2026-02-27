@@ -93,6 +93,14 @@ div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
     font-weight: 700 !important;
 }
 
+/* ===== BIG ANALYZE BUTTON ONLY ===== */
+div.stButton > button[kind="secondary"] {
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    padding: 16px 20px !important;
+    border-radius: 12px !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -115,9 +123,8 @@ model_data = load_model()
 clf = model_data['classifier']
 reg = model_data['regressor']
 
-# ---------------- FORMAT TIME (FIXED) ----------------
+# ---------------- FORMAT TIME ----------------
 def format_thai_datetime(timestamp_str):
-
     thai_months_full = {
         1: "มกราคม", 2: "กุมภาพันธ์", 3: "มีนาคม", 4: "เมษายน",
         5: "พฤษภาคม", 6: "มิถุนายน", 7: "กรกฎาคม", 8: "สิงหาคม",
@@ -126,10 +133,7 @@ def format_thai_datetime(timestamp_str):
 
     timestamp_str = timestamp_str.strip()
 
-    formats = [
-        "%d%m%Y_%H%M%S",  # 29022026_051000
-        "%Y%m%d_%H%M%S",  # 20260229_051000
-    ]
+    formats = ["%d%m%Y_%H%M%S", "%Y%m%d_%H%M%S"]
 
     for fmt in formats:
         try:
@@ -140,7 +144,6 @@ def format_thai_datetime(timestamp_str):
         except:
             continue
 
-    # fallback ถ้า format ไม่ตรงจริง ๆ
     return timestamp_str, ""
 
 # ---------------- GET HISTORY ----------------
@@ -180,122 +183,15 @@ if 'current_device' not in st.session_state:
 if 'selected_timestamp' not in st.session_state:
     st.session_state.selected_timestamp = None
 
-# ==================================================
-# LOGIN PAGE
-# ==================================================
-if not st.session_state.logged_in:
-
-    st.markdown("<h1 style='text-align:center;margin-top:100px;'>เข้าสู่ระบบ TERRA</h1>", unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns([1,2,1])
-
-    with col2:
-        with st.form("login_form"):
-            device_input = st.text_input("Serial Number:", placeholder="เช่น TERRA0001")
-            submit_login = st.form_submit_button("เข้าสู่ระบบ", use_container_width=True)
-
-            if submit_login:
-                if device_input:
-                    device_id_upper = device_input.strip().upper()
-                    doc_ref = db.collection('devices').document(device_id_upper).get()
-
-                    if doc_ref.exists:
-                        st.session_state.logged_in = True
-                        st.session_state.current_device = device_id_upper
-                        st.session_state.selected_timestamp = None
-                        st.rerun()
-                    else:
-                        st.error("❌ ไม่พบรหัสเครื่องนี้ในระบบ")
-                else:
-                    st.warning("⚠️ กรุณากรอกรหัสเครื่อง")
-
-# ==================================================
-# DASHBOARD
-# ==================================================
-else:
+# ================= DASHBOARD =================
+if st.session_state.logged_in:
 
     device_id = st.session_state.current_device
     history_list = get_sensor_history(device_id)
 
-    with st.sidebar:
-
-        st.markdown("<div class='sidebar-title'>TERRA</div>", unsafe_allow_html=True)
-        st.divider()
-
-        st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
-        st.divider()
-        st.subheader("History")
-
-        if history_list:
-            for item in history_list:
-                date_part, time_part = format_thai_datetime(item['timestamp'])
-                is_active = item['timestamp'] == st.session_state.selected_timestamp
-                container_class = "active-history" if is_active else ""
-                st.markdown(f"<div class='{container_class}'>", unsafe_allow_html=True)
-
-                if st.button(
-                    f"{date_part} {time_part}",
-                    key=item['timestamp'],
-                    use_container_width=True
-                ):
-                    st.session_state.selected_timestamp = item['timestamp']
-                    st.rerun()
-
-                st.markdown("</div>", unsafe_allow_html=True)
-
-        st.divider()
-        st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
-
-        if st.button("ออกจากระบบ", use_container_width=True):
-            st.session_state.logged_in = False
-            st.session_state.current_device = None
-            st.session_state.selected_timestamp = None
-            st.rerun()
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    sensor_data = None
-    if history_list:
-        if st.session_state.selected_timestamp:
-            for item in history_list:
-                if item['timestamp'] == st.session_state.selected_timestamp:
-                    sensor_data = item
-                    break
-        else:
-            sensor_data = history_list[0]
-
-    col_left, col_right = st.columns([3,1])
-    with col_left:
-        st.title("Dashboard")
-
-    with col_right:
-        if sensor_data:
-            date_part, time_part = format_thai_datetime(sensor_data['timestamp'])
-            st.markdown(
-                f"<div class='time-text'><div style='font-size:20px;'>{date_part}</div><div style='font-size:20px;'>{time_part}</div></div>",
-                unsafe_allow_html=True
-            )
-
-    st.markdown("วิเคราะห์ธาตุอาหารในดินและแนะนำการใส่ปุ๋ยด้วย AI")
+    sensor_data = history_list[0] if history_list else None
 
     if sensor_data:
-
-        st.subheader("ข้อมูลจากเซนเซอร์")
-
-        m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Nitrogen (N)", sensor_data['N'])
-        m2.metric("Phosphorus (P)", sensor_data['P'])
-        m3.metric("Potassium (K)", sensor_data['K'])
-        m4.metric("ค่า pH", sensor_data['pH'])
-        m5.metric("ความชื้น (%)", sensor_data['Moist'])
-
-        with st.expander("ดูค่าเพิ่มเติม"):
-            st.write(f"อุณหภูมิ: {sensor_data['temp']} °C")
-            st.write(f"Conductivity: {sensor_data['cond']}")
-
-        st.divider()
-
-        st.subheader("⚙️ ตั้งค่าการวิเคราะห์")
 
         stage_name = st.selectbox(
             "ระยะการเจริญเติบโต:",
@@ -308,7 +204,8 @@ else:
             value=100
         )
 
-        if st.button("เริ่มวิเคราะห์", use_container_width=True):
+        # ✅ ปุ่มใหญ่ขึ้น (แก้แค่ตรงนี้)
+        if st.button("เริ่มวิเคราะห์", use_container_width=True, type="secondary"):
 
             stage_map = {
                 "ฟื้นต้น":1,
@@ -346,6 +243,3 @@ else:
 
     else:
         st.error("❌ ไม่พบข้อมูลเซนเซอร์")
-
-    st.divider()
-    st.caption("Project Terra | Engineering CMU 2026")

@@ -87,7 +87,7 @@ if not st.session_state.logged_in:
 
     st.markdown("""
         <h1 style='text-align: center; margin-top: 80px;'>
-            เข้าสู่ระบบ TERRA (WEFARM)
+            เข้าสู่ระบบ TERRA
         </h1>
         <p style='text-align: center; font-size:18px;'>
             กรุณากรอกรหัสเครื่องเซนเซอร์ (Serial Number)
@@ -140,9 +140,13 @@ else:
         if sensor_data:
             formatted_time = format_thai_datetime(sensor_data['timestamp'])
             st.markdown(
-                f"<div style='text-align: right; font-size:16px;'>"
-                f"<b>{formatted_time}</b>"
-                f"</div>",
+                f"""
+                <div style='text-align: right; line-height:1.4; margin-top:10px;'>
+                    <div style='font-size:22px; font-weight:600; color:#444;'>
+                        {formatted_time}
+                    </div>
+                </div>
+                """,
                 unsafe_allow_html=True
             )
 

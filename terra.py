@@ -83,22 +83,28 @@ def format_thai_datetime(timestamp_str):
         }
 
         date_part = f"{dt.day} {thai_months_full[dt.month]} {dt.year}"
-        time_part = f"{dt.hour} : {dt.minute:02d}"
+        time_part = f"{dt.hour}:{dt.minute:02d}"
 
         return date_part, time_part
 
     except:
         return timestamp_str, ""
 
-# ---------------- GET SENSOR DATA ----------------
-def get_sensor_latest(device_id):
+# ---------------- GET LAST 10 HISTORY ----------------
+def get_sensor_history(device_id, limit=10):
     try:
-        query = db.collection('devices').document(device_id).collection('soilData')
-        docs = query.order_by("__name__", direction=firestore.Query.DESCENDING).limit(1).get()
+        query = db.collection('devices') \
+                  .document(device_id) \
+                  .collection('soilData') \
+                  .order_by("__name__", direction=firestore.Query.DESCENDING) \
+                  .limit(limit)
 
+        docs = query.stream()
+
+        history = []
         for doc in docs:
             data = doc.to_dict()
-            return {
+            history.append({
                 'timestamp': doc.id,
                 'N': data.get('N', 0),
                 'P': data.get('P', 0),
@@ -107,16 +113,21 @@ def get_sensor_latest(device_id):
                 'Moist': data.get('moisture', 0),
                 'temp': data.get('temperature', 0),
                 'cond': data.get('conductivity', 0)
-            }
+            })
+
+        return history
+
     except Exception as e:
         st.error(f"เกิดข้อผิดพลาด: {e}")
-    return None
+        return []
 
 # ---------------- SESSION ----------------
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'current_device' not in st.session_state:
     st.session_state.current_device = None
+if 'selected_timestamp' not in st.session_state:
+    st.session_state.selected_timestamp = None
 
 # ==================================================
 # LOGIN PAGE
@@ -159,27 +170,44 @@ if not st.session_state.logged_in:
 else:
 
     device_id = st.session_state.current_device
+    history_list = get_sensor_history(device_id)
 
     # -------- SIDEBAR --------
     with st.sidebar:
 
-        # TOP (Status)
         st.success(f"🟢 เชื่อมต่อกับเครื่อง:\n**{device_id}**")
+        st.divider()
+        st.subheader("📜 History (10 ล่าสุด)")
 
-        # BOTTOM (Logout)
+        for item in history_list:
+            date_part, time_part = format_thai_datetime(item['timestamp'])
+            label = f"{date_part} {time_part}"
+
+            if st.button(label, key=item['timestamp']):
+                st.session_state.selected_timestamp = item['timestamp']
+
+        st.divider()
         st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
 
-        logout = st.button("ออกจากระบบ", use_container_width=True)
-
-        if logout:
+        if st.button("ออกจากระบบ", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.current_device = None
+            st.session_state.selected_timestamp = None
             st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # -------- FETCH DATA --------
-    sensor_data = get_sensor_latest(device_id)
+    # -------- SELECT DATA --------
+    sensor_data = None
+
+    if history_list:
+        if st.session_state.selected_timestamp:
+            for item in history_list:
+                if item['timestamp'] == st.session_state.selected_timestamp:
+                    sensor_data = item
+                    break
+        else:
+            sensor_data = history_list[0]  # default latest
 
     # -------- HEADER --------
     col_left, col_right = st.columns([3,1])
@@ -193,8 +221,8 @@ else:
             st.markdown(
                 f"""
                 <div class='time-text'>
-                    <div style="font-size:20px;">{date_part}</div>
-                    <div style="font-size:20px;">{time_part}</div>
+                    <div style="font-size:18px;">{date_part}</div>
+                    <div style="font-size:18px;">{time_part}</div>
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -203,7 +231,8 @@ else:
     st.markdown("วิเคราะห์ธาตุอาหารในดินและแนะนำการใส่ปุ๋ยด้วย AI")
 
     if sensor_data:
-        st.subheader("ข้อมูลล่าสุดจากเซนเซอร์")
+
+        st.subheader("ข้อมูลจากเซนเซอร์")
 
         m1, m2, m3, m4, m5 = st.columns(5)
         m1.metric("Nitrogen (N)", sensor_data['N'])
